@@ -5,7 +5,11 @@ class DataObject(object):
 
 	def __init__(self, pathname):
 		self.pathname = pathname
-		self.get_size()
+		self.set_size()
 
-	def get_size(self):
-		self.size = 0
+	def set_pathname(self, pathname):
+		self.pathname = pathname
+
+	def set_size(self):
+		raise NotImplementedError()
+

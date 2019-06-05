@@ -22,15 +22,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CloudSync.py" />
-    <Compile Include="repository\data_object.py">
+    <Compile Include="data_object.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="repository\__init__.py">
+    <Compile Include="file_object.py">
       <SubType>Code</SubType>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="repository\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
