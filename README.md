@@ -13,6 +13,8 @@ Data in a repository is organized into files and folders.
 Currently, this is the only partially functioning application in this project.  This is a GUI app
 which shows the contents of an S3 bucket.
 
+### Usage
+
     usage: S3Browser.py [-h] [--bucket BUCKET] [--refresh]
 
     S3 object browser
@@ -21,3 +23,7 @@ which shows the contents of an S3 bucket.
       -h, --help       show this help message and exit
       --bucket BUCKET  Name of bucket browse
       --refresh        Refresh local cached database from S3 storage
+      
+### Screenshot
+![Screenshot of S3Browser](Docs/s3browser_1.jpg )
+
