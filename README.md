@@ -24,6 +24,9 @@ which shows the contents of an S3 bucket.
       --bucket BUCKET  Name of bucket browse
       --refresh        Refresh local cached database from S3 storage
       
-### Screenshot
+### Screenshots
 ![Screenshot of S3Browser](Docs/s3browser_1.jpg )
+
+
+![S3 Browser on Mac](Docs/Screen%20Shot%20Mac.png)
 
