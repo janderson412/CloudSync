@@ -1,6 +1,6 @@
 import wx, os, boto3, time
 import sqlite3
-from Bucket import CachedBucket, S3Bucket
+from S3Util.Bucket import CachedBucket, S3Bucket
 
 class ObjectListPanel(wx.Panel):
     def __init__(self, parent):
@@ -8,16 +8,16 @@ class ObjectListPanel(wx.Panel):
         self.horizontal = wx.BoxSizer(wx.HORIZONTAL)
         self.RowObjDict = {}
 
-        self.ListControl = wx.ListCtrl(
+        self._listControl = wx.ListCtrl(
             self, size=(-1,-1),
             style=wx.LC_REPORT | wx.BORDER_SUNKEN | wx.EXPAND
         )
-        self.ListControl.InsertColumn(0, 'Key', width=140)
-        self.ListControl.InsertColumn(1, 'Size', width=40)
-        self.ListControl.InsertColumn(2, 'Class', width=80)
+        self._listControl.InsertColumn(0, 'Key', width=140)
+        self._listControl.InsertColumn(1, 'Size', width=40)
+        self._listControl.InsertColumn(2, 'Class', width=80)
 
         #self.horizontal.Add(self.ListControl, 0, wx.ALL | wx.EXPAND, 10)
-        self.horizontal.Add(self.ListControl, proportion=1, flag=wx.EXPAND)
+        self.horizontal.Add(self._listControl, proportion=1, flag=wx.EXPAND)
 
         self.vertical = wx.BoxSizer(wx.VERTICAL)
         self.vertical.Add(self.horizontal, proportion=1, flag=wx.EXPAND)
@@ -33,8 +33,8 @@ class ObjectListFrame(wx.Frame):
         self.Show()
 
     @property
-    def ListCtrl(self):
-        return self.panel.ListControl
+    def ListControl(self):
+        return self.panel._listControl
 
 if __name__ == '__main__':
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     index = 0
     for fileObj in bucket.BucketObjects:
-        frame.ListCtrl.Append([fileObj.Name, fileObj.Size, fileObj.StorageClass.name])
+        frame.ListControl.Append([fileObj.Name, fileObj.Size, fileObj.StorageClass.name])
         index = index + 1
 
     app.MainLoop()
