@@ -22,7 +22,9 @@ class ObjectListPanel(wx.Panel):
         self.vertical = wx.BoxSizer(wx.VERTICAL)
         self.vertical.Add(self.horizontal, proportion=1, flag=wx.EXPAND)
 
-        #self.SetSizer(mainSizer)
+        self._label = wx.StaticText(self, label='Label here')
+        self.vertical.Add(self._label)
+
         self.SetSizerAndFit(self.vertical)
 
 class ObjectListFrame(wx.Frame):
@@ -35,6 +37,10 @@ class ObjectListFrame(wx.Frame):
     @property
     def ListControl(self):
         return self.panel._listControl
+
+    @property
+    def Label(self):
+        return self.panel._label
 
 if __name__ == '__main__':
 
@@ -56,8 +62,12 @@ if __name__ == '__main__':
     frame = ObjectListFrame()
 
     index = 0
+    totalSize = 0
     for fileObj in bucket.BucketObjects:
         frame.ListControl.Append([fileObj.Name, fileObj.Size, fileObj.StorageClass.name])
+        totalSize += fileObj.Size
         index = index + 1
+    totalSizeInMb = totalSize / (1024 * 1024)
+    frame.Label.SetLabel(f'Total size: {totalSize:,} ({totalSizeInMb:.2f} MB)')
 
     app.MainLoop()

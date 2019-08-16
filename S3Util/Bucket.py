@@ -3,6 +3,9 @@ from enum import Enum
 import sqlite3
 
 class StorageClass(Enum):
+    '''
+    Enumeration of Amazon S3 storage types.
+    '''
     STANDARD = 1
     REDUCED_REDUNDANCY = 2
     GLACIER = 3
@@ -12,7 +15,19 @@ class StorageClass(Enum):
     DEEP_ARCHIVE = 7
 
 class FileObject():
+    '''
+    A FileObject contains information about a single object stored in the cloud.  This is an abstract class
+    that is realized with an Amazon S3 file object or filesystem file object.
+    '''
     def __init__(self, name, size, timestamp, billableSize, storageClass):
+        '''
+
+        :param name (string): Name of file object (key)
+        :param size (int): Size of object, in bytes
+        :param timestamp (datetime): Date/time object was stored
+        :param billableSize (int): Size, in bytes, for billing
+        :param storageClass (StorageClass): Storage class of object
+        '''
         self._name = name
         self._size = size
         self._timestamp = timestamp
@@ -21,22 +36,47 @@ class FileObject():
 
     @property
     def Name(self):
+        '''
+        Get the name of the object.
+
+        :returns: (string) Name of object (key)
+        '''
         return self._name
 
     @property
     def Size(self):
+        '''
+        Get the size of the object.
+
+        :return: (int) Size of object, in bytes
+        '''
         return self._size
 
     @property
     def Timestamp(self):
+        '''
+        Get the date & time object was stored.
+
+        :return: (datetime) Date/time when object stored.
+        '''
         return self._timestamp
 
     @property
     def BillableSize(self):
+        '''
+        Get the billale size of the object.
+
+        :return: (int) Billable size of object, in bytes
+        '''
         return self._billableSize
 
     @property
     def StorageClass(self):
+        '''
+        Get the storage class of the file object
+
+        :return: (StorageClass) Storage class
+        '''
         return self._storageClass
 
 class BucketObject(FileObject):
