@@ -51,8 +51,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Complaint Update Script'
-copyright = u'2019, Medtronic'
+project = u'CloudSync'
+copyright = u'2019, John E. Anderson Consulting LLC'
 author = u'John E. Anderson'
 
 # The version info for the project you're documenting, acts as replacement for

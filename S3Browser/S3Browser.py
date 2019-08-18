@@ -4,6 +4,11 @@ from S3Util.Bucket import CachedBucket, S3Bucket
 
 class ObjectListPanel(wx.Panel):
     def __init__(self, parent):
+        '''
+
+        Args:
+            parent:
+        '''
         super().__init__(parent)
         self.horizontal = wx.BoxSizer(wx.HORIZONTAL)
         self.RowObjDict = {}
