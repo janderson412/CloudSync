@@ -7,5 +7,5 @@ CloudSync - A program for synchronization of files to the cloud
     :caption: Contents:
 
     Design.rst
-    S3Util.rst
+    Util.rst
 

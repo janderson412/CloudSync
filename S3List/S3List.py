@@ -1,9 +1,5 @@
 import os
-from S3Util.Bucket import CachedBucket
-
-def CreateFolderHierrarchy(allNames, dict, root):
-    for name in allNames:
-
+from Util.Repository import CachedRepository
 
 if __name__ == '__main__':
     import argparse
@@ -18,15 +14,12 @@ if __name__ == '__main__':
     dbName = bucketName + '.db'
     bucket = None
     if (not os.path.exists(dbName)) or args.refresh:
-        bucket = CachedBucket.CreateLocalCachedDatabase(bucketName)
+        bucket = CachedRepository.create_local_cached_database(bucketName)
     else:
-        bucket = CachedBucket.LoadFromCache(bucketName)
+        bucket = CachedRepository.load_from_cache(bucketName)
 
-    allNames = ['/' + o.Name for o in bucket.BucketObjects]
+    allNames = ['/' + o.full_name for o in bucket.file_objects]
 
     for name in allNames:
         print(name)
 
-    dict = dict()
-    root = '/'
-    CreateFolderHierrarchy(allNames, dict, root)

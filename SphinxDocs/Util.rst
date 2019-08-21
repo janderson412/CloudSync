@@ -1,7 +1,7 @@
 Utility Classes
 ===============
 
-.. automodule:: S3Util.Bucket
+.. automodule:: Util.Repository
     :members:
     :undoc-members:
     :show-inheritance:

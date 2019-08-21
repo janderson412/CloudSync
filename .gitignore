@@ -3,3 +3,5 @@ __pycache__/
 venv/
 *.suo
 *.DotSettings.user
+HTML/*
+*.db

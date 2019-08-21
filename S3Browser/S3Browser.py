@@ -1,6 +1,6 @@
 import wx, os, boto3, time
 import sqlite3
-from S3Util.Bucket import CachedBucket, S3Bucket
+from Util.Repository import CachedRepository, S3Repository
 
 class ObjectListPanel(wx.Panel):
     def __init__(self, parent):
@@ -19,7 +19,7 @@ class ObjectListPanel(wx.Panel):
         )
         self._listControl.InsertColumn(0, 'Key', width=140)
         self._listControl.InsertColumn(1, 'Size', width=40)
-        self._listControl.InsertColumn(2, 'Class', width=80)
+        self._listControl.InsertColumn(2, 'Timestamp', width=80)
 
         #self.horizontal.Add(self.ListControl, 0, wx.ALL | wx.EXPAND, 10)
         self.horizontal.Add(self._listControl, proportion=1, flag=wx.EXPAND)
@@ -59,18 +59,18 @@ if __name__ == '__main__':
     dbName = bucketName + '.db'
     bucket = None
     if (not os.path.exists(dbName)) or args.refresh:
-        bucket = CachedBucket.CreateLocalCachedDatabase(bucketName)
+        bucket = CachedRepository.create_local_cached_database(bucketName)
     else:
-        bucket = CachedBucket.LoadFromCache(bucketName)
+        bucket = CachedRepository.load_from_cache(bucketName)
 
     app = wx.App(False)
     frame = ObjectListFrame()
 
     index = 0
     totalSize = 0
-    for fileObj in bucket.BucketObjects:
-        frame.ListControl.Append([fileObj.Name, fileObj.Size, fileObj.StorageClass.name])
-        totalSize += fileObj.Size
+    for fileObj in bucket.file_objects:
+        frame.ListControl.Append([fileObj.full_name, fileObj.size, fileObj.timestamp.isoformat()])
+        totalSize += fileObj.size
         index = index + 1
     totalSizeInMb = totalSize / (1024 * 1024)
     frame.Label.SetLabel(f'Total size: {totalSize:,} ({totalSizeInMb:.2f} MB)')
