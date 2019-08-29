@@ -30,7 +30,7 @@ class FileObject:
         :param size: (long) Size of file object in bytes (default: 0)
         :param timestamp: (datetime) Timestamp of file object (default: current time)
         :param path_delimiter: (string) delimiter for components of file path (default: '/'
-        :param full_name: (string) Full name of file object, including path
+        :param full_name: (string) Full name of file object, including path (relative to root of repository)
         :param name: (string) Name of file object (without path)
         :param folder: (string) Folder containing file object
         '''
@@ -115,7 +115,7 @@ class Repository():
         self._file_objects = file_objects
 
     @property
-    def support_versions(self):
+    def supports_versions(self):
         '''
         Does this repository support file versions?
         :return: (bool) True if versions supported, False if not.
@@ -132,14 +132,53 @@ class S3FileObject(FileObject):
         size = objectSummary.size
         timestamp = objectSummary.last_modified
         super().__init__(full_name=name, size=size, timestamp=timestamp)
+        self._storage_class = S3StorageClass[objectSummary.storage_class]
+
+        if (self._storage_class == S3StorageClass.STANDARD_IA or self._storage_class == S3StorageClass.ONEZONE_IA) and \
+                size < S3FileObject.MIN_BILLABLE_SIZE:
+            self._billable_size = S3FileObject.MIN_BILLABLE_SIZE
+        else:
+            self._billable_size = size
+
+    @property
+    def storage_class(self):
+        return self._storage_class
+
+    @property
+    def billable_size(self):
+        return self._billable_size
+
+class LocalFileObject(FileObject):
+    '''
+    File object for local hard drive or locally accessible file share
+    '''
+    def __init__(self, full_name, path_delimiter = '/'):
+        size = os.path.getsize(full_name)
+        timestamp = datetime.fromtimestamp(os.stat(full_name).st_mtime)
+        super().__init__(size, timestamp, path_delimiter, full_name)
 
 
 class S3Repository(Repository):
     def __init__(self, bucketName):
         s3 = boto3.resource('s3')
         self._bucket = s3.Bucket(bucketName)
-        super().__init__([S3FileObject(o) for o in self._bucket.objects.all()])
+        # pull all objects from bucket and use to initialize base, versions supported
+        super().__init__([S3FileObject(o) for o in self._bucket.objects.all()], supports_versions=True)
 
+
+class LocalRepository(Repository):
+    def __init__(self, root, filter=None):
+        files = self.get_files(root)
+        super().__init__([LocalFileObject(name) for name in files], supports_versions=False)
+
+    @staticmethod
+    def get_files(root_folder):
+        allFiles = []
+        for dirpath, dirnames, filenames in os.walk(root_folder):
+            for filename in filenames:
+                fullpath = dirpath + os.sep + filename
+                allFiles.append(fullpath)
+        return allFiles
 
 class CachedRepository(Repository):
     def __init__(self, dbName):

@@ -1,6 +1,7 @@
 import wx, os, boto3, time
+import sys
 import sqlite3
-from Util.Repository import CachedRepository, S3Repository
+from Util.Repository import CachedRepository, S3Repository, S3FileObject, LocalRepository
 
 class ObjectListPanel(wx.Panel):
     def __init__(self, parent):
@@ -20,6 +21,8 @@ class ObjectListPanel(wx.Panel):
         self._listControl.InsertColumn(0, 'Key', width=140)
         self._listControl.InsertColumn(1, 'Size', width=40)
         self._listControl.InsertColumn(2, 'Timestamp', width=80)
+        self._listControl.InsertColumn(3, 'Class', width=80)
+        self._listControl.InsertColumn(4, 'BillableSize', width=80)
 
         #self.horizontal.Add(self.ListControl, 0, wx.ALL | wx.EXPAND, 10)
         self.horizontal.Add(self._listControl, proportion=1, flag=wx.EXPAND)
@@ -52,24 +55,37 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='S3 object browser')
     parser.add_argument('--bucket', help='Name of bucket browse')
+    parser.add_argument('--folder', help='Name of folder to browse')
     parser.add_argument('--refresh', action='store_true', default=False, help='Refresh local cached database from S3 storage')
     args = parser.parse_args()
 
-    bucketName = args.bucket
-    dbName = bucketName + '.db'
-    bucket = None
-    if (not os.path.exists(dbName)) or args.refresh:
-        bucket = CachedRepository.create_local_cached_database(bucketName)
+    repository = None
+    if args.bucket:
+        bucketName = args.bucket
+        dbName = bucketName + '.db'
+        if (not os.path.exists(dbName)) or args.refresh:
+            repository = CachedRepository.create_local_cached_database(bucketName)
+        else:
+            repository = CachedRepository.load_from_cache(bucketName)
+
+    elif args.folder:
+        folder = args.folder
+        repository = LocalRepository(folder)
+
     else:
-        bucket = CachedRepository.load_from_cache(bucketName)
+        parser.print_help()
+        sys.exit(1)
 
     app = wx.App(False)
     frame = ObjectListFrame()
 
     index = 0
     totalSize = 0
-    for fileObj in bucket.file_objects:
-        frame.ListControl.Append([fileObj.full_name, fileObj.size, fileObj.timestamp.isoformat()])
+    for fileObj in repository.file_objects:
+        if type(fileObj) is S3FileObject:
+            frame.ListControl.Append([fileObj.full_name, fileObj.size, fileObj.timestamp.isoformat(), fileObj.storage_class.name, fileObj.billable_size])
+        else:
+            frame.ListControl.Append([fileObj.full_name, fileObj.size, fileObj.timestamp.isoformat()])
         totalSize += fileObj.size
         index = index + 1
     totalSizeInMb = totalSize / (1024 * 1024)

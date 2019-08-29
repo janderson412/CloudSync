@@ -14,14 +14,12 @@ Currently, this is the only partially functioning application in this project.  
 which shows the contents of an S3 bucket.
 
 ### Usage
-
-    usage: S3Browser.py [-h] [--bucket BUCKET] [--refresh]
-
     S3 object browser
 
     optional arguments:
       -h, --help       show this help message and exit
       --bucket BUCKET  Name of bucket browse
+      --folder FOLDER  Name of folder to browse
       --refresh        Refresh local cached database from S3 storage
       
 ### Screenshots
