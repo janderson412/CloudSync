@@ -50,12 +50,26 @@ class ObjectListFrame(wx.Frame):
     def Label(self):
         return self.panel._label
 
+def GetSize(value):
+    KB = 1024
+    MB = KB * KB
+    GB = MB * KB
+    if value < KB:
+        return f'{value} Bytes'
+    if value < MB:
+        return f'{value/KB:.1f} KB'
+    if value < GB:
+        return f'{value/MB:.1f} MB'
+    else:
+        return f'{value/GB:.1f} GB'
+
 if __name__ == '__main__':
 
     import argparse
     parser = argparse.ArgumentParser(description='S3 object browser')
-    parser.add_argument('--bucket', help='Name of bucket browse')
-    parser.add_argument('--folder', help='Name of folder to browse')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--bucket', help='Name of bucket to browse', nargs='?')
+    group.add_argument('--folder', help='Name of folder to browse', nargs='?')
     parser.add_argument('--refresh', action='store_true', default=False, help='Refresh local cached database from S3 storage')
     args = parser.parse_args()
 
@@ -89,6 +103,6 @@ if __name__ == '__main__':
         totalSize += fileObj.size
         index = index + 1
     totalSizeInMb = totalSize / (1024 * 1024)
-    frame.Label.SetLabel(f'Total size: {totalSize:,} ({totalSizeInMb:.2f} MB)')
+    frame.Label.SetLabel(f'Total size: {totalSize:,} ({GetSize(totalSize)})')
 
     app.MainLoop()
