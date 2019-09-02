@@ -34,13 +34,13 @@ class FileObject:
         :param name: (string) Name of file object (without path)
         :param folder: (string) Folder containing file object
         '''
-        if (full_name == None and (name == None or folder == None)):
+        if full_name == None and (name == None or folder == None):
             raise Exception('Full path not given and either name or folder missing')
-        if (full_name != None and (name != None or folder != None)):
+        if full_name != None and (name != None or folder != None):
             raise Exception('Full name given and either name or folder are defined')
-        if (size < 0):
+        if size < 0:
             raise Exception('Size must be greater than or equal to 0')
-        if (full_name != None):
+        if full_name != None:
             # full pathname given
             self._full_name = full_name
             self._name = full_name.split(path_delimiter)[-1]
@@ -128,17 +128,21 @@ class S3FileObject(FileObject):
 
     def __init__(self, objectSummary):
         self._objectSummary = objectSummary
-        name = objectSummary._key
+        name = objectSummary.object_key + '$' + objectSummary.version_id
         size = objectSummary.size
+        if size is None:
+            size = 0
         timestamp = objectSummary.last_modified
         super().__init__(full_name=name, size=size, timestamp=timestamp)
-        self._storage_class = S3StorageClass[objectSummary.storage_class]
+        self._storage_class = S3StorageClass['STANDARD']
+        self._billable_size = size
+        #self._storage_class = S3StorageClass[objectSummary.storage_class]
 
-        if (self._storage_class == S3StorageClass.STANDARD_IA or self._storage_class == S3StorageClass.ONEZONE_IA) and \
-                size < S3FileObject.MIN_BILLABLE_SIZE:
-            self._billable_size = S3FileObject.MIN_BILLABLE_SIZE
-        else:
-            self._billable_size = size
+        #if (self._storage_class == S3StorageClass.STANDARD_IA or self._storage_class == S3StorageClass.ONEZONE_IA) and \
+                #size < S3FileObject.MIN_BILLABLE_SIZE:
+            #self._billable_size = S3FileObject.MIN_BILLABLE_SIZE
+        #else:
+            #self._billable_size = size
 
     @property
     def storage_class(self):
@@ -162,8 +166,11 @@ class S3Repository(Repository):
     def __init__(self, bucketName):
         s3 = boto3.resource('s3')
         self._bucket = s3.Bucket(bucketName)
+        #versions = self._bucket.object_versions
+        #for v in versions.all():
+        #    print(v)
         # pull all objects from bucket and use to initialize base, versions supported
-        super().__init__([S3FileObject(o) for o in self._bucket.objects.all()], supports_versions=True)
+        super().__init__([S3FileObject(o) for o in self._bucket.object_versions.all()], supports_versions=True)
 
 
 class LocalRepository(Repository):
