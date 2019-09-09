@@ -8,6 +8,7 @@ class OutputType(Enum):
     TextFile = 2
     Excel = 3
 
+
 class BucketOutput:
     def __init__(self, output_type, output_header, filename=None):
         self._type = output_type
@@ -27,20 +28,20 @@ class BucketOutput:
         return self._output_header
 
 
-def OutputFileObjects(objs, output):
+def output_file_objects(objects, output):
     header = 'key,id,is_latest,size,last_modified,storage_class,version_id'
     if output.type == OutputType.StandardOutput:
         if output.output_header:
             print(header)
-        for o in objs:
-            print(GetFileObjectOutput(o))
+        for o in objects:
+            print(get_file_object_output(o))
 
     if output.type == OutputType.TextFile:
         with open(output.filename, mode='w') as f:
             if output.output_header:
                 f.write(header + '\n')
-            for o in objs:
-                f.write(GetFileObjectOutput(o) + '\n')
+            for o in objects:
+                f.write(get_file_object_output(o) + '\n')
 
     if output.type == OutputType.Excel:
         wb = Workbook()
@@ -50,7 +51,7 @@ def OutputFileObjects(objs, output):
             for n in range(len(header_items)):
                 ws.cell(column=n + 1, row=1, value=header_items[n])
         row = 2
-        for o in objs:
+        for o in objects:
             ws.cell(row=row, column=1, value=o.key)
             ws.cell(row=row, column=2, value=o.id)
             ws.cell(row=row, column=3, value=o.is_latest)
@@ -62,14 +63,14 @@ def OutputFileObjects(objs, output):
         wb.save(output.filename)
 
 
-
-def GetFileObjectOutput(o):
+def get_file_object_output(o):
     return f'{o.key},{o.id},{o.is_latest},{o.size},{o.last_modified},{o.storage_class},{o.version_id}'
 
 
 if __name__ == '__main__':
 
     import argparse
+
     parser = argparse.ArgumentParser(description='S3 Bucket List')
     parser.add_argument('bucket', help='Bucket name', metavar='bucket-name')
     output_group = parser.add_mutually_exclusive_group()
@@ -78,17 +79,15 @@ if __name__ == '__main__':
     parser.add_argument('--header', help='Output header line', action='store_true')
     args = parser.parse_args()
 
-    output = None
+    bucket_output = None
     if args.o:
-        output = BucketOutput(OutputType.TextFile, args.header, filename=args.o)
+        bucket_output = BucketOutput(OutputType.TextFile, args.header, filename=args.o)
     elif args.e:
-        output = BucketOutput(OutputType.Excel, args.header, filename=args.e)
+        bucket_output = BucketOutput(OutputType.Excel, args.header, filename=args.e)
     else:
-        output = BucketOutput(OutputType.StandardOutput, args.header)
+        bucket_output = BucketOutput(OutputType.StandardOutput, args.header)
 
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(args.bucket)
 
-    #all_objects = [o for o in bucket.object_versions.all()]
-    OutputFileObjects(bucket.object_versions.all(), output)
-
+    output_file_objects(bucket.object_versions.all(), bucket_output)
