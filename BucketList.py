@@ -1,7 +1,7 @@
 from enum import Enum
 import boto3
 from openpyxl import Workbook
-
+from Util.S3Repository import Repository, FileObject, FileVersion
 
 class OutputType(Enum):
     StandardOutput = 1
@@ -117,6 +117,9 @@ if __name__ == '__main__':
     else:
         bucket_output = BucketOutput(OutputType.StandardOutput, args.header, args.versions)
 
-    s3 = boto3.resource('s3')
-    selected_bucket = s3.Bucket(args.bucket)
-    output_file_objects(selected_bucket, bucket_output)
+    # s3 = boto3.resource('s3')
+    # selected_bucket = s3.Bucket(args.bucket)
+    # output_file_objects(selected_bucket, bucket_output)
+
+    repository = Repository(args.bucket)
+    print(repository)

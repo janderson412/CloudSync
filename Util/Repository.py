@@ -96,6 +96,35 @@ class FileObject:
         return self._timestamp
 
 
+class FileVersion:
+    def __init__(self, timestamp, size):
+        """
+        Initialize instance of FileVersion
+        :param timestamp: (datetime) Date and time object saved
+        :param size: (int) size, in bytes, of file
+        """
+        self._timestamp = timestamp
+        self._size = size
+
+    @property
+    def size(self):
+        """
+        Get the size of the object.
+
+        :return: (int) Size of object, in bytes
+        """
+        return self._size
+
+    @property
+    def timestamp(self):
+        """
+        Get the date & time object was stored.
+
+        :return: (datetime) Date/time when object stored.
+        """
+        return self._timestamp
+
+
 class Repository:
     """
     A repository for holding FileObjects.
