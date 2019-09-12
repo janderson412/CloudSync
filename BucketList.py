@@ -33,25 +33,33 @@ class BucketOutput:
         return self._show_versions
 
 
-def output_file_objects(bucket, output):
+def output_file_objects(repository, output):
+    items = list()
     if output.show_versions:
-        objects = bucket.object_versions.all()
-        header = 'key,id,is_latest,size,last_modified,storage_class,version_id'
+        header = 'key,version_id,time_stamp,size,deleted,num_versions'
+        for key, o in repository.file_objects.items():
+            line = f'{key},,{o.time_stamp},{o.size},{o.is_deleted},{o.num_versions}'
+            items.append(line)
+            for v in sorted(o.versions, reverse=True):
+                line = f',{v.version_id},{v.time_stamp},{v.size},{v.is_delete_marker},'
+                items.append(line)
     else:
-        objects = bucket.objects.all()
-        header = 'key,size,last_modified,storage_class'
+        header = 'key,time_stamp,size,deleted'
+        for o in repository.file_objects:
+            line = f'{o.key},{o.time_stamp},{o.size},{o.is_deleted}'
+            items.append(line)
     if output.type == OutputType.StandardOutput:
         if output.output_header:
             print(header)
-        for o in objects:
-            print(get_file_object_output(o, output))
+        for o in items:
+            print(o)
 
     if output.type == OutputType.TextFile:
         with open(output.filename, mode='w') as f:
             if output.output_header:
                 f.write(header + '\n')
-            for o in objects:
-                f.write(get_file_object_output(o, output) + '\n')
+            for o in items:
+                f.write(o)
 
     if output.type == OutputType.Excel:
         wb = Workbook()
@@ -61,33 +69,14 @@ def output_file_objects(bucket, output):
             for n in range(len(header_items)):
                 ws.cell(column=n + 1, row=1, value=header_items[n])
         row = 2
-        if output.show_versions:
-            c = boto3.client('s3')
-            for o in objects:
-                ws.cell(row=row, column=1, value=o.key)
-                ws.cell(row=row, column=2, value=o.id)
-                ws.cell(row=row, column=3, value=o.is_latest)
-                ws.cell(row=row, column=4, value=o.size)
-                ws.cell(row=row, column=5, value=o.last_modified)
-                ws.cell(row=row, column=6, value=o.storage_class)
-                ws.cell(row=row, column=7, value=o.version_id)
-                try:
-                    response = c.head_object(Bucket='jea-scratch', Key=o.key)
-                    if 'DeleteMarker' in response:
-                        delete_marker = response['DeleteMarker']
-                        print(delete_marker)
-                except Exception as e:
-                    print(e)
-                row += 1
-        else:
-            for o in objects:
-                ws.cell(row=row, column=1, value=o.key)
-                ws.cell(row=row, column=2, value=o.size)
-                ws.cell(row=row, column=3, value=o.last_modified)
-                ws.cell(row=row, column=4, value=o.storage_class)
-                row += 1
+        for o in items:
+            col = 1
+            line_items = o.split(sep=',')
+            for x in line_items:
+                ws.cell(row=row, column=col, value=x)
+                col += 1
+            row += 1
         wb.save(output.filename)
-
 
 def get_file_object_output(o, output):
     if output.show_versions:
@@ -122,4 +111,4 @@ if __name__ == '__main__':
     # output_file_objects(selected_bucket, bucket_output)
 
     repository = Repository(args.bucket)
-    print(repository)
+    output_file_objects(repository, bucket_output)

@@ -9,7 +9,7 @@ class FileObject:
         elif bucket_object and bucket_object_version:
             raise Exception('Can\'t use both bucket_object and bucket_object_version')
         self._key = key
-        self._versions = dict()
+        self._versions = list()
         self._num_versions = 0
         if bucket_object_version is not None:
             file_version = FileVersion(bucket_object_version)
@@ -21,7 +21,7 @@ class FileObject:
             self._num_versions = 1
 
     def add_version(self, file_version):
-        self._versions[file_version.version_id] = file_version
+        self._versions.append(file_version)
         if file_version.is_latest:
             self._time_stamp = file_version.time_stamp
             self._size = file_version.size
@@ -81,7 +81,29 @@ class FileVersion:
 
     @property
     def is_delete_marker(self):
-        return not self._size
+        if self._size is None:
+            return True
+        else:
+            return False
+
+    def __cmp__(self, other):
+        if self._time_stamp < other.time_stamp:
+            return -1
+        elif self._time_stamp > other.time_stamp:
+            return 1
+        return 0
+
+    def __lt__(self, other):
+        return self.time_stamp < other.time_stamp
+
+    def __le__(self, other):
+        return self.time_stamp <= other.time_stamp
+
+    def __gt__(self, other):
+        return self.time_stamp > other.time_stamp
+
+    def __ge__(self, other):
+        return self.time_stamp >= other.time_stamp
 
 
 class Repository:
@@ -106,6 +128,10 @@ class Repository:
             objects = self._bucket.objects.all()
             for o in objects:
                 self._objects[o.key] = FileObject(o.key, bucket_object=o)
+
+    @property
+    def file_objects(self):
+        return self._objects
 
     @property
     def versioning(self):
