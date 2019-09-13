@@ -1,7 +1,7 @@
 from enum import Enum
-import boto3
 from openpyxl import Workbook
-from Util.S3Repository import Repository, FileObject, FileVersion
+from Util.S3Repository import Repository, S3FileObject, S3FileVersion
+from datetime import datetime
 
 class OutputType(Enum):
     StandardOutput = 1
@@ -36,17 +36,19 @@ class BucketOutput:
 def output_file_objects(repository, output):
     items = list()
     if output.show_versions:
-        header = 'key,version_id,time_stamp,size,deleted,num_versions'
+        header = 'key,version_id,time_stamp,size,storage_class,deleted,num_versions'
         for key, o in repository.file_objects.items():
-            line = f'{key},,{o.time_stamp},{o.size},{o.is_deleted},{o.num_versions}'
+            k = key.replace(',', ' ')
+            line = f'{k},,{o.time_stamp},{o.size},{o.storage_class.name},{o.is_deleted},{o.num_versions}'
             items.append(line)
             for v in sorted(o.versions, reverse=True):
-                line = f',{v.version_id},{v.time_stamp},{v.size},{v.is_delete_marker},'
+                line = f',{v.version_id},{v.time_stamp},{v.size},{o.storage_class.name},{v.is_delete_marker},'
                 items.append(line)
     else:
-        header = 'key,time_stamp,size,deleted'
-        for o in repository.file_objects:
-            line = f'{o.key},{o.time_stamp},{o.size},{o.is_deleted}'
+        header = 'key,time_stamp,size,storage_class,deleted'
+        for key, o in repository.file_objects.items():
+            k = key.replace(',', ' ')
+            line = f'{k},{o.time_stamp},{o.size},{o.storage_class.name},{o.is_deleted}'
             items.append(line)
     if output.type == OutputType.StandardOutput:
         if output.output_header:
@@ -77,12 +79,6 @@ def output_file_objects(repository, output):
                 col += 1
             row += 1
         wb.save(output.filename)
-
-def get_file_object_output(o, output):
-    if output.show_versions:
-        return f'{o.key},{o.id},{o.is_latest},{o.size},{o.last_modified},{o.storage_class},{o.version_id}'
-    else:
-        return f'{o.key},{o.id},{o.is_latest},{o.size},{o.last_modified},{o.storage_class},{o.version_id}'
 
 
 if __name__ == '__main__':

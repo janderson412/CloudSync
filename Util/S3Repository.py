@@ -1,8 +1,31 @@
 
 import boto3
+from enum import Enum
 
 
-class FileObject:
+class S3StorageClass(Enum):
+    """
+    Enumeration of Amazon S3 storage types.
+    """
+    NONE = 0
+    STANDARD = 1
+    REDUCED_REDUNDANCY = 2
+    GLACIER = 3
+    STANDARD_IA = 4
+    ONEZONE_IA = 5
+    INTELLIGENT_TIERING = 6
+    DEEP_ARCHIVE = 7
+
+    @classmethod
+    def FromObject(cls, o):
+        if o.storage_class is None:
+            return S3StorageClass.NONE
+        else:
+            return S3StorageClass[o.storage_class]
+
+
+
+class S3FileObject:
     def __init__(self, key, bucket_object=None, bucket_object_version=None):
         if not bucket_object and not bucket_object_version:
             raise Exception('Must supply either bucket_object or bucket_object_version')
@@ -12,11 +35,12 @@ class FileObject:
         self._versions = list()
         self._num_versions = 0
         if bucket_object_version is not None:
-            file_version = FileVersion(bucket_object_version)
+            file_version = S3FileVersion(bucket_object_version)
             self.add_version(file_version)
         else:
             self._time_stamp = bucket_object.last_modified
             self._size = bucket_object.size
+            self._storage_class = S3StorageClass.FromObject(bucket_object)
             self._is_deleted = False
             self._num_versions = 1
 
@@ -26,6 +50,7 @@ class FileObject:
             self._time_stamp = file_version.time_stamp
             self._size = file_version.size
             self._is_deleted = file_version.is_delete_marker
+            self._storage_class = file_version.storage_class
         self._num_versions += 1
 
     @property
@@ -45,6 +70,10 @@ class FileObject:
         return self._size
 
     @property
+    def storage_class(self):
+        return self._storage_class
+
+    @property
     def is_deleted(self):
         return self._is_deleted
 
@@ -53,12 +82,13 @@ class FileObject:
         return self._num_versions
 
 
-class FileVersion:
+class S3FileVersion:
     def __init__(self, o):
         self._version_id = o.id
         self._time_stamp = o.last_modified
         self._size = o.size
         self._is_latest = o.is_latest
+        self._storage_class = S3StorageClass.FromObject(o)
 
     @property
     def version_id(self):
@@ -85,6 +115,10 @@ class FileVersion:
             return True
         else:
             return False
+
+    @property
+    def storage_class(self):
+        return self._storage_class
 
     def __cmp__(self, other):
         if self._time_stamp < other.time_stamp:
@@ -121,13 +155,13 @@ class Repository:
             objects = self._bucket.object_versions.all()
             for o in objects:
                 if o.key in self._objects:
-                    self._objects[o.key].add_version(FileVersion(o))
+                    self._objects[o.key].add_version(S3FileVersion(o))
                 else:
-                    self._objects[o.key] = FileObject(o.key, bucket_object_version=o)
+                    self._objects[o.key] = S3FileObject(o.key, bucket_object_version=o)
         else:
             objects = self._bucket.objects.all()
             for o in objects:
-                self._objects[o.key] = FileObject(o.key, bucket_object=o)
+                self._objects[o.key] = S3FileObject(o.key, bucket_object=o)
 
     @property
     def file_objects(self):
